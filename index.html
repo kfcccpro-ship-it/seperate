@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>자산건전성 기준 참조 — 새마을금고</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@400&display=swap');
+:root{
+  --blue:#3b5bdb;--blue-light:#ebf0ff;
+  --green:#087f5b;--green-light:#e6faf4;
+  --amber:#b45309;--amber-light:#fffbeb;
+  --orange:#c2410c;--orange-light:#fff7ed;
+  --red:#b91c1c;--red-light:#fef2f2;
+  --purple:#6d28d9;--purple-light:#f5f3ff;
+  --gray:#6b7280;--gray-light:#f3f4f6;--gray-mid:#e5e7eb;
+  --dark:#1e2333;--white:#fff;
+  --r:12px;--r-sm:8px;
+  --font:'Noto Sans KR',-apple-system,sans-serif;
+  --mono:'JetBrains Mono',monospace;
+
+  /* 등급 색상 */
+  --c-n:#2e7d32;--bg-n:#e8f5e9;--bd-n:#a5d6a7;
+  --c-w:#f57f17;--bg-w:#fff8e1;--bd-w:#ffe082;
+  --c-f:#e64a19;--bg-f:#fff3e0;--bd-f:#ffcc80;
+  --c-d:#c62828;--bg-d:#fce4ec;--bd-d:#f48fb1;
+  --c-l:#6d28d9;--bg-l:#ede7f6;--bd-l:#ce93d8;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:var(--font);background:#f0f2f8;min-height:100vh;color:var(--dark)}
+
+/* ── APP SHELL ── */
+.app{max-width:480px;margin:0 auto;min-height:100vh;background:var(--white);display:flex;flex-direction:column}
+
+/* ── TOPBAR ── */
+.topbar{background:var(--dark);padding:13px 16px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:100}
+.tlogo{width:30px;height:30px;background:rgba(255,255,255,.12);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.ttitle{font-size:14px;font-weight:700;color:#fff;flex:1}
+.tsub{font-size:10px;color:rgba(255,255,255,.55);margin-top:1px}
+.tver{font-size:10px;background:rgba(255,255,255,.15);color:#fff;padding:2px 7px;border-radius:20px;font-weight:700;flex-shrink:0}
+
+/* ── NAV TABS (자산 유형) ── */
+.nav-tabs{display:flex;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--gray-mid);background:var(--white);position:sticky;top:56px;z-index:90;padding:0 2px}
+.nav-tabs::-webkit-scrollbar{display:none}
+.nav-tab{padding:10px 14px;font-size:13px;font-weight:500;color:var(--gray);border-bottom:2px solid transparent;white-space:nowrap;cursor:pointer;flex-shrink:0;transition:all .15s}
+.nav-tab.active{color:var(--dark);border-bottom-color:var(--dark);font-weight:700}
+.nav-tab:hover{color:var(--dark)}
+
+/* ── SEARCH ── */
+.search-wrap{padding:12px 14px;background:var(--white);border-bottom:1px solid var(--gray-mid);position:sticky;top:103px;z-index:89}
+.search-box{display:flex;align-items:center;gap:9px;background:var(--gray-light);border-radius:var(--r-sm);padding:9px 13px}
+.search-icon{font-size:15px;flex-shrink:0;opacity:.5}
+.search-input{flex:1;border:none;background:none;font-size:14px;font-family:var(--font);color:var(--dark);outline:none}
+.search-input::placeholder{color:#9ca3af}
+.search-clear{border:none;background:none;font-size:16px;cursor:pointer;color:var(--gray);padding:0;line-height:1;display:none}
+.search-clear.v{display:block}
+
+/* ── CONTENT ── */
+.content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px}
+
+/* ── 등급 배지 ── */
+.grade-strip{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+.gs-btn{padding:5px 12px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;border:2px solid transparent;transition:all .15s;flex-shrink:0}
+.gs-n{background:var(--bg-n);color:var(--c-n);border-color:var(--bd-n)}
+.gs-w{background:var(--bg-w);color:var(--c-w);border-color:var(--bd-w)}
+.gs-f{background:var(--bg-f);color:var(--c-f);border-color:var(--bd-f)}
+.gs-d{background:var(--bg-d);color:var(--c-d);border-color:var(--bd-d)}
+.gs-l{background:var(--bg-l);color:var(--c-l);border-color:var(--bd-l)}
+.gs-btn.dimmed{opacity:.35}
+
+/* ── REG INFO ── */
+.reg-bar{display:flex;align-items:center;gap:7px;background:var(--gray-light);border-radius:var(--r-sm);padding:8px 12px;margin-bottom:14px;font-size:11px;color:var(--gray)}
+.reg-bar strong{color:var(--dark)}
+
+/* ── GRADE SECTION ── */
+.grade-section{margin-bottom:10px;border-radius:var(--r);overflow:hidden;border:1px solid var(--gray-mid)}
+.grade-header{padding:12px 15px;display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none}
+.grade-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.grade-title{font-size:15px;font-weight:700;flex:1}
+.grade-en{font-size:11px;opacity:.6;font-weight:400;margin-left:4px}
+.grade-count{font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px}
+.grade-toggle{font-size:13px;color:var(--gray);transition:transform .2s;margin-left:4px}
+.grade-toggle.o{transform:rotate(180deg)}
+.grade-body{display:none;border-top:1px solid var(--gray-mid)}
+.grade-body.o{display:block}
+
+/* 등급별 헤더 색상 */
+.gs-header-n{background:var(--bg-n)}.gs-header-n .grade-title{color:var(--c-n)}.gs-header-n .grade-count{background:var(--c-n);color:#fff}.gs-header-n .grade-dot{background:var(--c-n)}
+.gs-header-w{background:var(--bg-w)}.gs-header-w .grade-title{color:var(--c-w)}.gs-header-w .grade-count{background:var(--c-w);color:#fff}.gs-header-w .grade-dot{background:var(--c-w)}
+.gs-header-f{background:var(--bg-f)}.gs-header-f .grade-title{color:var(--c-f)}.gs-header-f .grade-count{background:var(--c-f);color:#fff}.gs-header-f .grade-dot{background:var(--c-f)}
+.gs-header-d{background:var(--bg-d)}.gs-header-d .grade-title{color:var(--c-d)}.gs-header-d .grade-count{background:var(--c-d);color:#fff}.gs-header-d .grade-dot{background:var(--c-d)}
+.gs-header-l{background:var(--bg-l)}.gs-header-l .grade-title{color:var(--c-l)}.gs-header-l .grade-count{background:var(--c-l);color:#fff}.gs-header-l .grade-dot{background:var(--c-l)}
+
+/* ── 기준 아이템 ── */
+.criteria-item{padding:12px 15px;border-bottom:1px solid var(--gray-light);display:flex;align-items:flex-start;gap:10px;cursor:pointer;transition:background .12s}
+.criteria-item:last-child{border-bottom:none}
+.criteria-item:hover{background:var(--gray-light)}
+.criteria-item.active-item{background:var(--blue-light)}
+.ci-num{font-size:11px;font-weight:700;color:var(--gray);font-family:var(--mono);min-width:24px;margin-top:2px;flex-shrink:0}
+.ci-body{flex:1}
+.ci-main{font-size:13px;font-weight:500;color:var(--dark);line-height:1.55;margin-bottom:3px}
+.ci-tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px}
+.ci-tag{font-size:10px;padding:1px 7px;border-radius:20px;border:1px solid var(--gray-mid);color:var(--gray)}
+.ci-tag.key{background:var(--blue-light);border-color:#b0c4f8;color:var(--blue)}
+.ci-expand{font-size:14px;color:var(--gray);flex-shrink:0;margin-top:2px;transition:transform .2s}
+.ci-expand.o{transform:rotate(180deg)}
+.ci-detail{display:none;padding:10px 15px 13px 49px;background:#f9fafb;border-top:1px solid var(--gray-light)}
+.ci-detail.o{display:block}
+.ci-basis{font-size:11px;font-weight:700;color:var(--blue);margin-bottom:5px;letter-spacing:.03em}
+.ci-text{font-size:12px;color:#374151;line-height:1.7}
+.ci-exceptions{margin-top:8px}
+.ci-exc-title{font-size:11px;font-weight:700;color:var(--amber);margin-bottom:4px}
+.ci-exc-item{font-size:12px;color:#374151;padding:3px 0;line-height:1.5;display:flex;gap:6px}
+.ci-exc-dot{color:var(--amber);flex-shrink:0}
+.ci-caution{margin-top:8px;background:#fff8e1;border-radius:6px;padding:8px 10px;font-size:12px;color:#92400e;line-height:1.6}
+
+/* ── 검색 결과 ── */
+.search-result-section{margin-bottom:6px}
+.search-result-header{font-size:11px;font-weight:700;color:var(--gray);padding:6px 4px;text-transform:uppercase;letter-spacing:.05em}
+.no-result{text-align:center;padding:40px 20px;color:var(--gray)}
+.no-result-icon{font-size:36px;margin-bottom:10px}
+.no-result-text{font-size:14px}
+
+/* ── 하이라이트 ── */
+mark{background:#fef08a;color:#713f12;border-radius:3px;padding:0 2px}
+
+/* ── 요약 카드 (홈탭) ── */
+.summary-overview{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.ov-card{border-radius:var(--r-sm);padding:12px;cursor:pointer;transition:all .15s}
+.ov-card:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.08)}
+.ov-card.n{background:var(--bg-n);border:1px solid var(--bd-n)}
+.ov-card.w{background:var(--bg-w);border:1px solid var(--bd-w)}
+.ov-card.f{background:var(--bg-f);border:1px solid var(--bd-f)}
+.ov-card.d{background:var(--bg-d);border:1px solid var(--bd-d)}
+.ov-card.l{background:var(--bg-l);border:1px solid var(--bd-l);grid-column:1/-1}
+.ov-grade{font-size:16px;font-weight:700;margin-bottom:3px}
+.ov-card.n .ov-grade{color:var(--c-n)}.ov-card.w .ov-grade{color:var(--c-w)}.ov-card.f .ov-grade{color:var(--c-f)}.ov-card.d .ov-grade{color:var(--c-d)}.ov-card.l .ov-grade{color:var(--c-l)}
+.ov-key{font-size:11px;color:var(--gray);line-height:1.5}
+.ov-period{font-size:12px;font-weight:700;margin-top:4px;font-family:var(--mono)}
+.ov-card.n .ov-period{color:var(--c-n)}.ov-card.w .ov-period{color:var(--c-w)}.ov-card.f .ov-period{color:var(--c-f)}.ov-card.d .ov-period{color:var(--c-d)}.ov-card.l .ov-period{color:var(--c-l)}
+
+/* ── 충당금 참조표 ── */
+.rate-table-wrap{border:1px solid var(--gray-mid);border-radius:var(--r);overflow:hidden;margin-bottom:14px}
+.rate-table-head{background:var(--dark);color:#fff;padding:10px 14px;font-size:12px;font-weight:700}
+.rate-table{width:100%;border-collapse:collapse;font-size:13px}
+.rate-table th{background:var(--gray-light);padding:8px 12px;text-align:left;font-size:11px;font-weight:700;color:var(--gray);border-bottom:1px solid var(--gray-mid)}
+.rate-table td{padding:9px 12px;border-bottom:1px solid var(--gray-light);color:var(--dark);vertical-align:middle}
+.rate-table tr:last-child td{border-bottom:none}
+.rate-num{font-family:var(--mono);font-weight:700;text-align:right}
+
+/* ── FLOW 다이어그램 (연체기간 흐름도) ── */
+.flow-wrap{border:1px solid var(--gray-mid);border-radius:var(--r);overflow:hidden;margin-bottom:14px}
+.flow-head{background:var(--dark);color:#fff;padding:10px 14px;font-size:12px;font-weight:700}
+.flow-body{padding:14px}
+.flow-row{display:flex;align-items:center;gap:6px;margin-bottom:8px}
+.flow-row:last-child{margin-bottom:0}
+.flow-period{font-size:11px;font-family:var(--mono);font-weight:700;color:var(--dark);min-width:90px;flex-shrink:0}
+.flow-arrow{font-size:12px;color:var(--gray);flex-shrink:0}
+.flow-badge{font-size:12px;font-weight:700;padding:3px 10px;border-radius:20px;flex-shrink:0}
+.fb-n{background:var(--bg-n);color:var(--c-n)}.fb-w{background:var(--bg-w);color:var(--c-w)}
+.fb-f{background:var(--bg-f);color:var(--c-f)}.fb-d{background:var(--bg-d);color:var(--c-d)}.fb-l{background:var(--bg-l);color:var(--c-l)}
+.flow-note{font-size:11px;color:var(--gray);flex:1;line-height:1.4}
+
+/* ── BUTTONS ── */
+.safe-bottom{height:env(safe-area-inset-bottom,16px)}
+
+@media(min-width:768px){
+  body{display:flex;align-items:flex-start;justify-content:center;padding:24px}
+  .app{max-width:480px;min-height:calc(100vh - 48px);border-radius:20px;box-shadow:0 20px 60px rgba(0,0,0,.12)}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="tlogo">📚</div>
+  <div style="flex:1">
+    <div class="ttitle">자산건전성 기준 참조</div>
+    <div class="tsub" id="topRegRef">새마을금고 감독기준 [별표 2]</div>
+  </div>
+  <span class="tver">B안</span>
+</div>
+
+<!-- NAV TABS -->
+<div class="nav-tabs" id="navTabs">
+  <div class="nav-tab active" onclick="switchTab('home',this)">🏠 홈</div>
+  <div class="nav-tab" onclick="switchTab('loan',this)">💰 대출금</div>
+  <div class="nav-tab" onclick="switchTab('securities',this)">📈 유가증권</div>
+  <div class="nav-tab" onclick="switchTab('provisional',this)">📋 가지급금</div>
+  <div class="nav-tab" onclick="switchTab('receivable',this)">🧾 미수금</div>
+  <div class="nav-tab" onclick="switchTab('interest',this)">🏷️ 미수이자</div>
+</div>
+
+<!-- SEARCH -->
+<div class="search-wrap">
+  <div class="search-box">
+    <span class="search-icon">🔍</span>
+    <input class="search-input" id="searchInput" placeholder="검색: 연체 기간, 담보, 부도, 폐업…" oninput="onSearch(this.value)">
+    <button class="search-clear" id="searchClear" onclick="clearSearch()">✕</button>
+  </div>
+</div>
+
+<div class="content" id="mainContent">
+  <!-- 동적으로 렌더링 -->
+</div>
+
+</div><!-- /app -->
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+//  지식 데이터 — 여기를 수정하면 모든 화면에 반영됩니다
+// ═══════════════════════════════════════════════════════════════
+const META = {
+  regRef: '행정안전부고시 제2025-48호',
+  regDate: '2025. 7. 8. 시행',
+};
+
+// 충당금 적립률
+const RATES = [
+  { grade:'정상',   cls:'n', rate:0.5,  note:'기본 적립' },
+  { grade:'요주의', cls:'w', rate:2.0,  note:'기본 적립' },
+  { grade:'고정',   cls:'f', rate:20.0, note:'회수예상가액 해당분' },
+  { grade:'회수의문',cls:'d', rate:50.0, note:'회수예상가액 초과분' },
+  { grade:'추정손실',cls:'l', rate:100.0,note:'회수불능 확실분' },
+];
+
+// 담보별 회수예상가액 반영비율
+const COLLATERAL_RATES = [
+  { type:'예탁금·적금', rate:100 },
+  { type:'국공채·지방채 등', rate:95 },
+  { type:'부동산 (감정가)', rate:70 },
+  { type:'동산 (감정가)', rate:50 },
+  { type:'보증서 (신보·농신보 등)', rate:100 },
+  { type:'무담보', rate:0 },
+];
+
+// ══════════════════════════════════════════════════════
+//  핵심 분류 기준 데이터
+//  각 항목 구조: { id, grade, gradeClass, main, basis, detail, tags, exceptions, caution }
+//  grade: 정상|요주의|고정|회수의문|추정손실
+//  gradeClass: n|w|f|d|l
+// ══════════════════════════════════════════════════════
+const CRITERIA = {
+
+  // ── 대출금 ──────────────────────────────────────────
+  loan: [
+    // 정상
+    { id:'L-N-01', grade:'정상', gc:'n', main:'연체 없고 신용상태 양호한 채무자의 총대출금', basis:'별표2 Ⅰ-1 정상', detail:'금융거래 내용과 신용상태가 양호하고 채무상환능력이 충분한 채무자에 대한 대출. 연체가 없거나 1개월 미만이라도 상환능력 충분 시 포함.', tags:['연체없음','정상거래'], caution:'' },
+    { id:'L-N-02', grade:'정상', gc:'n', main:'1개월 미만 연체이나 채무상환능력 충분', basis:'별표2 Ⅰ-1 정상', detail:'1개월 미만의 연체대출금을 보유하고 있으나 채무상환능력이 충분한 채무자에 대한 총대출금.', tags:['1개월미만','연체'], caution:'1개월 도달 즉시 재분류 필요' },
+    { id:'L-N-03', grade:'정상', gc:'n', main:'고정이하 보유 채무자 — 국채·지방채·재정증권·한은통화안정증권 담보분', basis:'별표2 Ⅰ-2 ④ 단서 제1~3호', detail:'고정이하 분류 대출 보유 채무자라도 국채(국채법), 지방채(지방재정법), 재정증권(국고금관리법), 한국은행통화안정증권(한국은행법) 담보 해당 금액은 정상 분류 가능.', tags:['담보','국채','지방채','담보분'], caution:'' },
+    { id:'L-N-04', grade:'정상', gc:'n', main:'고정이하 보유 채무자 — 공기업·준정부기관 채권 또는 공제해지환급금·금융기관보증 담보분', basis:'별표2 Ⅰ-2 ④ 단서 제4~6호', detail:'공기업·준정부기관 발행 채권, 공제해지환급금, 신보·농신보·보증보험·건설공제조합·주택도시보증공사·지역신용보증재단 등 보증 담보분은 정상 분류 가능.', tags:['담보','보증서','공제'], caution:'보증 유효기간 및 한도 확인 필수' },
+    { id:'L-N-05', grade:'정상', gc:'n', main:'부실징후 법인 — 해당 금고와 2년 이상 연체없이 정상 거래', basis:'별표2 Ⅰ-2 ⑨ 단서 제1호', detail:'부실징후가 있는 법인이라도 자산건전성 분류기준일 현재 해당 금고와 2년 이상 연체 없이 정상 거래 중인 경우 정상 분류 가능.', tags:['법인','부실징후','예외','2년'], caution:'2년 정상거래 기간 지속 모니터링 필수' },
+    { id:'L-N-06', grade:'정상', gc:'n', main:'부실징후 법인 — 주관사(은행)가 정상 분류한 공동 동순위 대출', basis:'별표2 Ⅰ-2 ⑨ 단서 제2호', detail:'은행 등 주관사와 공동으로 취급한 동순위 대출 중 주관사가 정상으로 분류한 대출. 주관사 미참여 시 참여 은행·보험사 전체가 정상 분류한 경우.', tags:['법인','부실징후','예외','공동대출'], caution:'주관사 분류 변경 시 즉시 연동 재분류' },
+
+    // 요주의
+    { id:'L-W-01', grade:'요주의', gc:'w', main:'1개월 이상 3개월 미만 연체 — 회수 확실시', basis:'별표2 Ⅰ-2 요주의 ①', detail:'1개월 이상 3개월 미만의 연체대출금을 보유하고 있으나 회수가 확실시 되는 채무자에 대한 총대출금.', tags:['1개월이상','3개월미만','연체'], caution:'3개월 도달 즉시 고정 이하로 재분류' },
+    { id:'L-W-02', grade:'요주의', gc:'w', main:'1개월 이상 연체 — 정부·지자체 대손보전 보장 금액', basis:'별표2 Ⅰ-2 요주의 ②', detail:'1개월 이상 연체 중인 대출금 중 정부 또는 지방자치단체 등으로부터 대손보전이 보장되는 금액.', tags:['연체','정부보증','정책자금'], caution:'대손보전 신청 기한 반드시 엄수' },
+    { id:'L-W-03', grade:'요주의', gc:'w', main:'1개월 미만 연체 — 신용정보관리규약 연체정보 등록 거래처', basis:'별표2 Ⅰ-2 요주의 ③', detail:'1개월 미만의 연체대출금을 보유하고 있으나 신용정보관리규약에 의하여 연체정보 등으로 등록된 거래처에 대한 총대출금.', tags:['신용정보','연체정보등록'], caution:'등록 해제 여부 정기 확인' },
+    { id:'L-W-04', grade:'요주의', gc:'w', main:'고정이하 보유 채무자 — 원리금 회수 불확실 담보 이외의 대출분', basis:'별표2 Ⅰ-2 요주의 ④', detail:'고정이하로 분류된 대출금을 보유하는 채무자에 대한 총대출금 중 L-N-03, L-N-04 담보에 해당하지 않는 금액.', tags:['고정이하보유','담보'], caution:'' },
+    { id:'L-W-05', grade:'요주의', gc:'w', main:'만기일 정상결제 확실한 상업어음할인 (고정이하 분류 중)', basis:'별표2 Ⅰ-2 요주의 ⑤', detail:'고정이하로 분류되는 상업어음할인 중 만기일에 정상결제가 확실시되는 상업어음할인.', tags:['상업어음','어음할인'], caution:'' },
+    { id:'L-W-06', grade:'요주의', gc:'w', main:'회생절차 중 공익채권 또는 1년 이상 정상 상환 회생채권', basis:'별표2 Ⅰ-2 요주의 ⑥', detail:'회생절차가 진행 중인 기업체에 대한 공익채권, 또는 회생계획에 따라 1년 이상 정상적으로 원리금이 상환되거나 채무상환능력이 크게 개선된 회생채권·회생담보권.', tags:['회생절차','공익채권'], caution:'' },
+    { id:'L-W-07', grade:'요주의', gc:'w', main:'기업개선작업(워크아웃) 대상업체 확정·신청 거래처', basis:'별표2 Ⅰ-2 요주의 ⑦', detail:'기업개선작업 대상업체로 확정(신청 포함)된 거래처에 대한 총대출금.', tags:['워크아웃','기업개선'], caution:'' },
+    { id:'L-W-08', grade:'요주의', gc:'w', main:'법원 경매 매각허가결정 후 배당으로 회수 확실한 금액', basis:'별표2 Ⅰ-2 요주의 ⑧', detail:'법원 경매절차에 따라 매각허가결정이 선고된 부동산 등과 관련한 여신 중 배당으로 회수가 확실시되는 금액. 매각대금 미납·배당이의 소 제기 등 변동 예상 시 고정.', tags:['경매','배당'], caution:'결산 확정 전 매각대금 미납·배당이의 소 제기 시 고정 분류' },
+    { id:'L-W-09', grade:'요주의', gc:'w', main:'부실징후 법인 — 예외 미해당', basis:'별표2 Ⅰ-2 요주의 ⑨', detail:'기타 부실징후가 예견되거나 발생 중에 있다고 인정되는 법인에 대한 총대출금. [부실징후 예시] ①3년 연속 결손 ②납입자본 완전잠식 ③차입금>매출액+2년 연속 영업이익<금융비용 ④경영권 내분 ⑤3개월 이상 조업중단 ⑥6개월 이내 1차 부도', tags:['법인','부실징후'], caution:'분기별 재무상태 모니터링 강화 필수', exceptions:['2년 이상 연체없이 정상 거래 시 → 정상 분류 가능','주관사(은행 등)가 정상 분류한 공동 동순위 대출 → 정상 분류 가능'] },
+
+    // 고정
+    { id:'L-F-01', grade:'고정', gc:'f', main:'3개월 이상 연체 채무자 — 회수예상가액 해당분', basis:'별표2 Ⅰ-3 고정 ①', detail:'3개월 이상의 연체대출금을 보유하고 있는 채무자에 대한 총대출금 중 회수예상가액 해당 금액. 회수예상가액 초과분 → 회수의문(3~12개월) 또는 추정손실(12개월 이상).', tags:['3개월이상','연체','회수예상가액'], caution:'회수예상가액 산정 기준: 별표 6 (담보종류별)' },
+    { id:'L-F-02', grade:'고정', gc:'f', main:'법적 절차 진행 중 채무자 — 회수예상가액 해당분', basis:'별표2 Ⅰ-3 고정 ②', detail:'담보권 실행, 지급명령신청, 대여금 청구소송, 강제집행 등 법적절차 진행중인 채무자에 대한 회수예상가액(자산건전성 분류기준일 현재 최근일의 담보평가액) 해당금액.', tags:['법적절차','소송','담보권실행'], caution:'가압류·가처분 중 연체 없으면 요주의 가능. 청구금액 합계 500만원 미만 또는 대출금의 1/100 미만이면 정상 가능', exceptions:['채무자 상환능력 저하와 무관한 가압류·가처분·압류이고 연체없는 경우 → 요주의','가압류·압류 청구금액 합계 500만원 미만 또는 대출금의 1/100 미만 → 정상'] },
+    { id:'L-F-03', grade:'고정', gc:'f', main:'폐업 중인 채무자 — 회수예상가액 해당분', basis:'별표2 Ⅰ-3 고정 ③', detail:'폐업 중인 채무자에 대한 총 대출금 중 회수예상가액 해당 금액.', tags:['폐업'], caution:'', exceptions:['개인사업자: 다른 소득이 있거나 영업 계속이 객관적으로 증명 → 원리금 회수 가능성에 따라 정상 또는 요주의'] },
+    { id:'L-F-04', grade:'고정', gc:'f', main:'동일인 대출한도 위반 채무자 — 회수예상가액 해당분', basis:'별표2 Ⅰ-3 고정 ④', detail:'법 제29조 및 제67조제4항의 준용규정을 위반하여 대출을 받은 채무자에 대한 총대출금 중 회수예상가액 해당 금액. 위반 발견일 현재 정상 신용상태 유지 시 → 발견일 이후 3개월 경과 후부터 고정이하.', tags:['동일인한도','위반'], caution:'' },
+    { id:'L-F-05', grade:'고정', gc:'f', main:'회생절차 진행(신청 포함) 중인 법인 — 회수예상가액 해당분', basis:'별표2 Ⅰ-3 고정 ⑤', detail:'채무자 회생 및 파산에 관한 법률에 의한 회생절차가 진행(신청 포함)중인 채무자에 대한 총대출금 중 회수예상가액 해당 금액.', tags:['회생절차','법인'], caution:'' },
+    { id:'L-F-06', grade:'고정', gc:'f', main:'1개월 이상 연체 + 3개월 이상 조업중단 또는 완전잠식+차입금초과+영업이익미달 법인', basis:'별표2 Ⅰ-3 고정 ⑥', detail:'다음 중 하나에 해당하며 1개월 이상 연체 법인: ①3개월 이상 조업중단 ②납입자본금 완전잠식 + 제1·2금융권 차입금>연간매출액 + 최근 2년 연속 영업이익<금융비용. → 총대출금 중 회수예상가액 해당분 고정.', tags:['법인','조업중단','완전잠식','1개월이상'], caution:'' },
+    { id:'L-F-07', grade:'고정', gc:'f', main:'신용관리자 등록 — 1,500만원 이상·3개월 이상 연체 거래처의 총대출 중 회수예상가액', basis:'별표2 Ⅰ-3 고정 ⑦', detail:'신용정보법에 의해 신용관리자로 등록된 거래처의 등록 내용상 1,500만원 이상 대출이 3개월 이상 연체된 경우 해당 거래처의 총대출 중 회수예상가액. 단, 해당 금고의 총대출금이 300만원 이하이면 요주의 가능.', tags:['신용관리자','1500만원'], caution:'' },
+
+    // 회수의문
+    { id:'L-D-01', grade:'회수의문', gc:'d', main:'3개월 이상 12개월 미만 연체 — 회수예상가액 초과분', basis:'별표2 Ⅰ-4 회수의문 ①', detail:'3개월 이상 12개월 미만 연체대출금을 보유하고 있는 채무자에 대한 총 대출금 중 회수예상가액 초과부분.', tags:['3개월이상','12개월미만','연체'], caution:'12개월 도달 즉시 추정손실로 상향' },
+
+    // 추정손실
+    { id:'L-L-01', grade:'추정손실', gc:'l', main:'12개월 이상 연체 — 회수예상가액 초과분', basis:'별표2 Ⅰ-5 추정손실 ①', detail:'12개월 이상 연체대출금을 보유하고 있는 채무자에 대한 총 대출금 중 회수예상가액 초과부분.', tags:['12개월이상','장기연체'], caution:'추정손실 분류 시에만 대손상각 처리 가능 (감독기준 제18조)' },
+    { id:'L-L-02', grade:'추정손실', gc:'l', main:'소송 패소로 담보권 소멸 + 채무자·보증인 행방불명 또는 상환능력 없음', basis:'별표2 Ⅰ-5 추정손실 ②', detail:'소송 패소로 인하여 담보권이 소멸되고 채무자 및 보증인이 행방불명되거나 상환능력이 없다고 판단되는 대출금.', tags:['패소','담보권소멸','행방불명'], caution:'' },
+    { id:'L-L-03', grade:'추정손실', gc:'l', main:'법적 절차 완결 후 잔존 채권 — 채무자·보증인 상환 불가능', basis:'별표2 Ⅰ-5 추정손실 ③', detail:'법적절차 완결 후의 잔존채권으로 채무자 및 보증인으로부터 상환가능성이 없다고 판단되는 대출금.', tags:['법적절차완결','잔존채권'], caution:'' },
+    { id:'L-L-04', grade:'추정손실', gc:'l', main:'채권·담보권 하자로 소송 중 패소 확실', basis:'별표2 Ⅰ-5 추정손실 ④', detail:'채권, 담보권 등의 하자로 인하여 소송이 계속 중이고 패소가 확실하다고 판단되는 대출금.', tags:['하자','패소확실'], caution:'' },
+    { id:'L-L-05', grade:'추정손실', gc:'l', main:'회수의문 분류 후 1년 이상 경과 — 재산 발견 불가', basis:'별표2 Ⅰ-5 추정손실 ⑤', detail:'회수의문으로 분류된 후 1년 이상이 경과되도록 채무관계인의 재산을 발견하지 못하는 등 회수가 불가능한 대출금.', tags:['회수의문','1년경과'], caution:'' },
+    { id:'L-L-06', grade:'추정손실', gc:'l', main:'최종부도·청산·파산·폐업으로 채권 회수 심각한 위험', basis:'별표2 Ⅰ-5 추정손실 ⑥', detail:'최종부도 발생, 청산·파산절차 진행 또는 폐업 등의 사유로 채권회수에 심각한 위험이 존재하는 것으로 판단되는 대출금.', tags:['최종부도','파산','청산','폐업'], caution:'' },
+  ],
+
+  // ── 유가증권 ────────────────────────────────────────
+  securities: [
+    { id:'S-N-01', grade:'정상', gc:'n', main:'평가액이 장부가액을 상회하는 유가증권', basis:'별표2 Ⅱ-1 ①', detail:'평가액이 장부가액을 상회하는 유가증권.', tags:['평가액','장부가액'], caution:'' },
+    { id:'S-N-02', grade:'정상', gc:'n', main:'일시적(3개월 미만) 하회이나 회복 전망 확실', basis:'별표2 Ⅱ-1 ②', detail:'평가액이 장부가액을 일시적(3월 미만)으로 하회하고 있으나 장차 회복될 전망이 확실시 되는 유가증권.', tags:['일시하회','회복전망'], caution:'3개월 초과 시 즉시 재분류' },
+    { id:'S-N-03', grade:'정상', gc:'n', main:'국공채·정부보증채·보증사채 — 원리금 회수 확실', basis:'별표2 Ⅱ-1 ③', detail:'국공채, 정부보증채, 보증사채 등으로서 원리금 회수가 확실시 되는 유가증권.', tags:['국공채','정부보증채'], caution:'' },
+    { id:'S-W-01', grade:'요주의', gc:'w', main:'평가액 상회이나 2년 이상 계속 납입자본 잠식 회사 발행', basis:'별표2 Ⅱ-2 ①', detail:'평가액이 장부가액을 상회하고 있으나 최근 2년 이상 계속하여 납입자본 잠식상태에 있는 회사가 발행한 유가증권.', tags:['자본잠식','발행사'], caution:'' },
+    { id:'S-W-02', grade:'요주의', gc:'w', main:'3개월 이상 계속 하회 — 평가 상당액', basis:'별표2 Ⅱ-2 ②', detail:'평가액이 장부가액을 3월 이상 계속 하회하고 있는 유가증권의 평가 상당액.', tags:['3개월이상','하회','평가상당액'], caution:'6개월 이상 하회 시 추정손실' },
+    { id:'S-W-03', grade:'요주의', gc:'w', main:'발행자 경영악화 등으로 신용위험 증대', basis:'별표2 Ⅱ-2 ③', detail:'최근 발행자의 경영악화 등으로 신용위험이 증대한 유가증권.', tags:['신용위험','경영악화'], caution:'' },
+    { id:'S-D-01', grade:'회수의문', gc:'d', main:'3개월 이상 계속 하회 — 평가손실액', basis:'별표2 Ⅱ-3 ①', detail:'평가액이 장부가액을 3월 이상 계속 하회하고 있는 유가증권의 평가손실액.', tags:['3개월이상','하회','평가손실'], caution:'6개월 이상 시 추정손실' },
+    { id:'S-D-02', grade:'회수의문', gc:'d', main:'발행자 신용위험 현저 악화로 만기 원금 회수 의문', basis:'별표2 Ⅱ-3 ②', detail:'발행자의 신용위험 등이 현저하게 악화되어 만기에 원금 회수가 의문시 되는 유가증권.', tags:['신용위험악화','원금회수'], caution:'' },
+    { id:'S-L-01', grade:'추정손실', gc:'l', main:'6개월 이상 계속 하회 — 평가손실액', basis:'별표2 Ⅱ-4 ①', detail:'평가액이 장부가액을 6월 이상 계속 하회하고 있는 유가증권의 평가손실액.', tags:['6개월이상','하회'], caution:'' },
+    { id:'S-L-02', grade:'추정손실', gc:'l', main:'발행자 파산으로 원금 회수 불능 확실', basis:'별표2 Ⅱ-4 ②', detail:'발행자의 파산으로 원금회수 불능이 확실시 되는 유가증권.', tags:['파산','원금불능'], caution:'' },
+    { id:'S-L-03', grade:'추정손실', gc:'l', main:'그 밖에 무가치한 유가증권', basis:'별표2 Ⅱ-4 ③', detail:'그 밖에 무가치한 유가증권.', tags:['무가치'], caution:'' },
+  ],
+
+  // ── 가지급금 ────────────────────────────────────────
+  provisional: [
+    { id:'P-N-01', grade:'정상', gc:'n', main:'당해·다음 회계연도에 정상 정리 확실한 가지급금', basis:'별표2 Ⅲ-1 ①', detail:'당해 회계연도 또는 다음 회계연도에 정상적으로 정리될 것이 확실한 가지급금.', tags:['회계연도내'], caution:'' },
+    { id:'P-N-02', grade:'정상', gc:'n', main:'기타 회수가 확실한 가지급금', basis:'별표2 Ⅲ-1 ②', detail:'기타 회수가 확실한 가지급금.', tags:['회수확실'], caution:'' },
+    { id:'P-D-01', grade:'회수의문', gc:'d', main:'사고금·출납부족금 정리 목적 — 손비처리 예상', basis:'별표2 Ⅲ-2 ①', detail:'사고금 또는 출납 부족금 정리를 위한 것으로 손비처리가 예상되는 가지급금.', tags:['사고금','출납부족'], caution:'' },
+    { id:'P-D-02', grade:'회수의문', gc:'d', main:'소송관계 비용 — 손비처리 예상', basis:'별표2 Ⅲ-2 ②', detail:'소송관계 비용으로서 손비처리가 예상되는 가지급금.', tags:['소송비용'], caution:'' },
+    { id:'P-D-03', grade:'회수의문', gc:'d', main:'그 밖에 회수 불확실 — 손비처리 예상', basis:'별표2 Ⅲ-2 ③', detail:'그 밖에 회수가 불확실하여 손비처리가 예상되는 가지급금.', tags:['회수불확실'], caution:'' },
+    { id:'P-L-01', grade:'추정손실', gc:'l', main:'사고금·출납부족금 정리 — 손비처리 불가피', basis:'별표2 Ⅲ-3 ①', detail:'사고금 또는 출납 부족금 정리를 위한 것으로 손비처리가 불가피한 가지급금.', tags:['사고금','손비처리불가피'], caution:'' },
+    { id:'P-L-02', grade:'추정손실', gc:'l', main:'소송관계 비용 — 패소 확실로 손비처리 불가피', basis:'별표2 Ⅲ-3 ②', detail:'소송관계 비용으로서 패소가 확실하여 손비처리가 불가피한 가지급금.', tags:['패소확실','소송'], caution:'' },
+    { id:'P-L-03', grade:'추정손실', gc:'l', main:'그 밖에 회수 불확실 — 손비처리 불가피', basis:'별표2 Ⅲ-3 ③', detail:'그 밖에 회수가 불확실하여 손비처리가 불가피한 가지급금.', tags:['회수불능'], caution:'' },
+  ],
+
+  // ── 미수금 ──────────────────────────────────────────
+  receivable: [
+    { id:'R-N-01', grade:'정상', gc:'n', main:'지급일부터 1개월 미경과', basis:'별표2 Ⅳ-1 정상', detail:'지급일부터 1개월이 경과하지 아니한 미수채권.', tags:['1개월미만'], caution:'' },
+    { id:'R-W-01', grade:'요주의', gc:'w', main:'지급일부터 1개월 이상 3개월 미만 경과', basis:'별표2 Ⅳ-2 요주의', detail:'지급일부터 1개월 이상 3개월이 경과하지 아니한 미수채권.', tags:['1개월이상','3개월미만'], caution:'3개월 도달 전 회수 조치 강구' },
+    { id:'R-F-01', grade:'고정', gc:'f', main:'3개월 이상 경과 — 회수예상가액 해당분', basis:'별표2 Ⅳ-3 고정', detail:'지급일부터 3개월 이상 경과된 미수채권으로서 회수예상가액 해당분.', tags:['3개월이상','회수예상가액'], caution:'' },
+    { id:'R-D-01', grade:'회수의문', gc:'d', main:'3개월 이상 경과 — 손실 예상이나 금액 미확정 초과분', basis:'별표2 Ⅳ-4 회수의문', detail:'지급일부터 3개월 이상 경과된 미수채권으로서 손실발생이 예상되나 현재 손실액을 확정할 수 없는 회수예상가액 초과분.', tags:['3개월이상','손실예상'], caution:'' },
+    { id:'R-L-01', grade:'추정손실', gc:'l', main:'3개월 이상 경과 — 회수불능 확실 초과분', basis:'별표2 Ⅳ-5 추정손실', detail:'지급일부터 3개월 이상 경과된 미수채권으로서 회수불능이 확실하여 손비처리가 불가피한 회수예상가액 초과분.', tags:['3개월이상','회수불능'], caution:'' },
+  ],
+
+  // ── 대출채권 미수이자 ────────────────────────────────
+  interest: [
+    { id:'I-N-01', grade:'정상', gc:'n', main:'원금·이자 연체 없는 대출채권의 미수이자', basis:'별표2 Ⅴ 정상', detail:'원금 또는 이자에 연체가 없는 대출채권에 한하여 정상으로 분류. (중앙회는 정상으로 분류된 대출금에 한해 정상 분류)', tags:['연체없음'], caution:'연체 발생 또는 정상 이외 등급으로 대출 재분류 시 미수이자도 함께 재분류' },
+  ],
+};
+
+// ═══════════════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════════════
+let currentTab='home';
+let activeGrades=new Set(['정상','요주의','고정','회수의문','추정손실']);
+let searchQuery='';
+let openItems=new Set();
+
+// ═══════════════════════════════════════════════════════════════
+//  NAV
+// ═══════════════════════════════════════════════════════════════
+function switchTab(tab, el){
+  currentTab=tab;
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  clearSearch(false);
+  render();
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  SEARCH
+// ═══════════════════════════════════════════════════════════════
+function onSearch(q){
+  searchQuery=q.trim();
+  document.getElementById('searchClear').classList.toggle('v',q.length>0);
+  render();
+}
+function clearSearch(doRender=true){
+  searchQuery='';
+  document.getElementById('searchInput').value='';
+  document.getElementById('searchClear').classList.remove('v');
+  if(doRender)render();
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  GRADE FILTER
+// ═══════════════════════════════════════════════════════════════
+function toggleGrade(grade, btn){
+  if(activeGrades.has(grade)){
+    if(activeGrades.size===1)return;
+    activeGrades.delete(grade);btn.classList.add('dimmed');
+  } else {
+    activeGrades.add(grade);btn.classList.remove('dimmed');
+  }
+  render();
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  ITEM EXPAND/COLLAPSE
+// ═══════════════════════════════════════════════════════════════
+function toggleItem(id){
+  if(openItems.has(id))openItems.delete(id);
+  else openItems.add(id);
+  const body=document.getElementById('body_'+id);
+  const icon=document.getElementById('ico_'+id);
+  if(body){body.classList.toggle('o');icon.classList.toggle('o');}
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  HIGHLIGHT
+// ═══════════════════════════════════════════════════════════════
+function hl(text,q){
+  if(!q)return text;
+  const re=new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'gi');
+  return text.replace(re,m=>`<mark>${m}</mark>`);
+}
+
+function matchItem(item, q){
+  if(!q)return true;
+  const haystack=[item.main,item.detail,item.basis,...(item.tags||[]),...(item.exceptions||[]),item.caution||''].join(' ').toLowerCase();
+  return haystack.includes(q.toLowerCase());
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  RENDER
+// ═══════════════════════════════════════════════════════════════
+function render(){
+  const cont=document.getElementById('mainContent');
+  if(searchQuery){renderSearch(cont);return;}
+  if(currentTab==='home'){renderHome(cont);return;}
+  renderTab(cont, CRITERIA[currentTab]||[]);
+}
+
+// ── 홈 탭 ──
+function renderHome(cont){
+  cont.innerHTML=`
+    <div class="reg-bar">📋 <strong>${META.regRef}</strong>&nbsp;|&nbsp;${META.regDate}</div>
+
+    <div style="font-size:13px;font-weight:700;color:var(--dark);margin-bottom:10px">연체기간별 분류 흐름 (대출금 기준)</div>
+    <div class="flow-wrap">
+      <div class="flow-head">⏱ 연체기간 → 기본 등급</div>
+      <div class="flow-body">
+        <div class="flow-row"><span class="flow-period">연체 없음</span><span class="flow-arrow">→</span><span class="flow-badge fb-n">정상</span><span class="flow-note">상환능력 충분</span></div>
+        <div class="flow-row"><span class="flow-period">1개월 미만</span><span class="flow-arrow">→</span><span class="flow-badge fb-n">정상</span><span class="flow-note">상환능력 충분 시</span></div>
+        <div class="flow-row"><span class="flow-period">1개월 미만</span><span class="flow-arrow">→</span><span class="flow-badge fb-w">요주의</span><span class="flow-note">신용정보등록 거래처</span></div>
+        <div class="flow-row"><span class="flow-period">1개월~3개월</span><span class="flow-arrow">→</span><span class="flow-badge fb-w">요주의</span><span class="flow-note">회수 확실시</span></div>
+        <div class="flow-row"><span class="flow-period">3개월~12개월</span><span class="flow-arrow">→</span><span class="flow-badge fb-f">고정</span><span class="flow-note">회수예상가액 해당분</span></div>
+        <div class="flow-row"><span class="flow-period">3개월~12개월</span><span class="flow-arrow">→</span><span class="flow-badge fb-d">회수의문</span><span class="flow-note">회수예상가액 초과분</span></div>
+        <div class="flow-row"><span class="flow-period">12개월 이상</span><span class="flow-arrow">→</span><span class="flow-badge fb-f">고정</span><span class="flow-note">회수예상가액 해당분</span></div>
+        <div class="flow-row"><span class="flow-period">12개월 이상</span><span class="flow-arrow">→</span><span class="flow-badge fb-l">추정손실</span><span class="flow-note">회수예상가액 초과분</span></div>
+      </div>
+    </div>
+
+    <div style="font-size:13px;font-weight:700;color:var(--dark);margin-bottom:10px">등급별 현황 (탭 클릭 시 상세 이동)</div>
+    <div class="summary-overview">
+      ${[
+        {cls:'n',grade:'정상',key:'연체없음·상환능력 충분',period:'< 1개월 (조건부)',tab:'loan'},
+        {cls:'w',grade:'요주의',key:'1개월 이상 ~ 3개월 미만 연체',period:'1M ~ 3M',tab:'loan'},
+        {cls:'f',grade:'고정',key:'3개월 이상 연체·회수예상가액 해당',period:'≥ 3개월',tab:'loan'},
+        {cls:'d',grade:'회수의문',key:'회수예상가액 초과분·손실 예상',period:'3M ~ 12M 초과',tab:'loan'},
+        {cls:'l',grade:'추정손실',key:'12개월 이상·회수불능 확실',period:'≥ 12개월 초과',tab:'loan'},
+      ].map(o=>`
+        <div class="ov-card ${o.cls}" onclick="jumpToGrade('${o.tab}','${o.grade}')">
+          <div class="ov-grade">${o.grade}</div>
+          <div class="ov-key">${o.key}</div>
+          <div class="ov-period">${o.period}</div>
+        </div>`).join('')}
+    </div>
+
+    <div style="font-size:13px;font-weight:700;color:var(--dark);margin-bottom:10px">대손충당금 적립률 참조</div>
+    <div class="rate-table-wrap">
+      <div class="rate-table-head">📊 적립률 기준 (별표 8 — ${META.regRef})</div>
+      <table class="rate-table">
+        <thead><tr><th>등급</th><th>적립률</th><th>비고</th></tr></thead>
+        <tbody>
+          ${RATES.map(r=>`<tr><td><span style="font-size:12px;font-weight:700;padding:2px 8px;border-radius:20px;background:var(--bg-${r.cls});color:var(--c-${r.cls})">${r.grade}</span></td><td class="rate-num">${r.rate}%</td><td style="font-size:12px;color:var(--gray)">${r.note}</td></tr>`).join('')}
+          <tr><td style="font-size:12px;color:#c2410c;font-weight:700">고위험대출 가산</td><td class="rate-num" style="color:#c2410c">+30%p</td><td style="font-size:12px;color:var(--gray)">만기일시·거치기간 중 2억↑, 5개 이상 금융기관</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div style="font-size:13px;font-weight:700;color:var(--dark);margin-bottom:10px">담보별 회수예상가액 반영 비율</div>
+    <div class="rate-table-wrap">
+      <div class="rate-table-head">🏠 반영 비율 기준 (별표 6)</div>
+      <table class="rate-table">
+        <thead><tr><th>담보 종류</th><th>반영 비율</th></tr></thead>
+        <tbody>
+          ${COLLATERAL_RATES.map(c=>`<tr><td>${c.type}</td><td class="rate-num" style="color:${c.rate===100?'var(--c-n)':c.rate===0?'var(--red)':'var(--amber)'}">${c.rate}%</td></tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="safe-bottom"></div>`;
+}
+
+function jumpToGrade(tab, grade){
+  const tabEl=document.querySelector(`.nav-tab:nth-child(${['home','loan','securities','provisional','receivable','interest'].indexOf(tab)+1})`);
+  switchTab(tab, tabEl||document.querySelectorAll('.nav-tab')[1]);
+  activeGrades=new Set([grade]);
+  document.querySelectorAll('.gs-btn').forEach(btn=>{
+    const g=btn.dataset.grade;
+    btn.classList.toggle('dimmed',g!==grade);
+  });
+  render();
+}
+
+// ── 자산 유형 탭 ──
+function renderTab(cont, items){
+  const grades=['정상','요주의','고정','회수의문','추정손실'];
+  const gcMap={정상:'n',요주의:'w',고정:'f',회수의문:'d',추정손실:'l'};
+
+  let html=`
+    <div class="grade-strip" id="gradeStrip">
+      ${grades.map(g=>`<button class="gs-btn gs-${gcMap[g]}${activeGrades.has(g)?'':' dimmed'}" data-grade="${g}" onclick="toggleGrade('${g}',this)">${g}</button>`).join('')}
+    </div>`;
+
+  grades.forEach(grade=>{
+    if(!activeGrades.has(grade))return;
+    const gradeItems=items.filter(i=>i.grade===grade);
+    if(!gradeItems.length)return;
+    const gc=gcMap[grade];
+    html+=`
+      <div class="grade-section" id="gs_${grade}">
+        <div class="grade-header gs-header-${gc}" onclick="toggleGradeSection('${grade}')">
+          <div class="grade-dot"></div>
+          <div class="grade-title">${grade}<span class="grade-en">${{정상:'Normal',요주의:'Precautionary',고정:'Substandard',회수의문:'Doubtful',추정손실:'Est. Loss'}[grade]}</span></div>
+          <span class="grade-count">${gradeItems.length}개</span>
+          <span class="grade-toggle o" id="gst_${grade}">▼</span>
+        </div>
+        <div class="grade-body o" id="gsb_${grade}">
+          ${gradeItems.map(item=>renderItem(item,'')).join('')}
+        </div>
+      </div>`;
+  });
+
+  html+=`<div class="safe-bottom"></div>`;
+  cont.innerHTML=html;
+}
+
+function toggleGradeSection(grade){
+  const body=document.getElementById('gsb_'+grade);
+  const icon=document.getElementById('gst_'+grade);
+  body.classList.toggle('o');icon.classList.toggle('o');
+}
+
+// ── 검색 결과 ──
+function renderSearch(cont){
+  const allItems=Object.values(CRITERIA).flat();
+  const matched=allItems.filter(i=>matchItem(i,searchQuery));
+  if(!matched.length){
+    cont.innerHTML=`<div class="no-result"><div class="no-result-icon">🔍</div><div class="no-result-text">「${searchQuery}」에 해당하는 기준이 없습니다.</div><div style="font-size:13px;color:var(--gray);margin-top:6px">다른 검색어를 입력해 보세요.</div></div>`;
+    return;
+  }
+  const ASSET_NAMES={loan:'대출금',securities:'유가증권',provisional:'가지급금',receivable:'미수금',interest:'미수이자'};
+  let html=`<div style="font-size:13px;font-weight:500;color:var(--gray);margin-bottom:12px">「${searchQuery}」 검색 결과 ${matched.length}건</div>`;
+  Object.keys(CRITERIA).forEach(assetKey=>{
+    const assetMatched=CRITERIA[assetKey].filter(i=>matchItem(i,searchQuery));
+    if(!assetMatched.length)return;
+    html+=`<div class="search-result-section"><div class="search-result-header">${ASSET_NAMES[assetKey]}</div>${assetMatched.map(item=>renderItem(item,searchQuery)).join('')}</div>`;
+  });
+  html+=`<div class="safe-bottom"></div>`;
+  cont.innerHTML=html;
+}
+
+// ── 아이템 렌더링 ──
+function renderItem(item, q){
+  const isOpen=openItems.has(item.id);
+  const gcMap={n:['#2e7d32','#e8f5e9'],w:['#f57f17','#fff8e1'],f:['#e64a19','#fff3e0'],d:['#c62828','#fce4ec'],l:['#6d28d9','#ede7f6']};
+  const [color,bg]=gcMap[item.gc]||['#6b7280','#f3f4f6'];
+  return `
+    <div class="criteria-item${isOpen?' active-item':''}" onclick="toggleItem('${item.id}')">
+      <span class="ci-num" style="color:${color}">${item.id.split('-').slice(0,2).join('-')}</span>
+      <div class="ci-body">
+        <div class="ci-main">${hl(item.main,q)}</div>
+        <div class="ci-tags">
+          <span class="ci-tag" style="background:${bg};color:${color};border-color:${color}40">${item.grade}</span>
+          ${(item.tags||[]).map(t=>`<span class="ci-tag${q&&t.toLowerCase().includes(q.toLowerCase())?' key':''}">${hl(t,q)}</span>`).join('')}
+        </div>
+      </div>
+      <span class="ci-expand${isOpen?' o':''}" id="ico_${item.id}">▼</span>
+    </div>
+    <div class="ci-detail${isOpen?' o':''}" id="body_${item.id}">
+      <div class="ci-basis">${item.basis}</div>
+      <div class="ci-text">${hl(item.detail,q)}</div>
+      ${item.exceptions&&item.exceptions.length?`
+        <div class="ci-exceptions">
+          <div class="ci-exc-title">⚡ 예외 / 상향 분류 가능</div>
+          ${item.exceptions.map(e=>`<div class="ci-exc-item"><span class="ci-exc-dot">→</span><span>${hl(e,q)}</span></div>`).join('')}
+        </div>`:''}
+      ${item.caution?`<div class="ci-caution">💡 <strong>주의:</strong> ${hl(item.caution,q)}</div>`:''}
+    </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════════════
+document.getElementById('topRegRef').textContent=`${META.regRef} [별표 2]`;
+render();
+</script>
+</body>
+</html>
